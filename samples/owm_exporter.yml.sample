@@ -1,0 +1,6 @@
+api_key: "Your api key comes here in"
+
+lat: 0.000000
+lon: 0.000000
+measurement: "metric"
+language: "en"
