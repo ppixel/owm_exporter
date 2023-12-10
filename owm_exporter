@@ -3,14 +3,37 @@
 import sys
 import yaml         # have to be installed
 import requests     # have to be installed
+from http.server import HTTPServer
+from http.server import BaseHTTPRequestHandler
+import pathlib
 
+#
+# Function to exit this program
 def exit_program(status_code):
     sys.exit(status_code)
 
-def main():
-    # Load configuration
+#
+# Class to handle the HTTP Requests and to show the metrics
+class WebRequestHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        if self.path == '/metrics':
+            self.send_response(200)
+            self.send_header("Content-Type", "text/plain")
+            self.end_headers()
+            content = get_metrics()
+            self.wfile.write(content.encode("utf-8"))
+        else:
+            self.send_error(404)
+
+    def do_POST(self):
+        self.do_GET()
+
+#
+# Function to get the metrics from the API
+def get_metrics():
+    # Load configuration for API
     try:
-        config_file = open("owm_exporter.yml", "r")
+        config_file = open(f"{pathlib.Path(__file__).parent.resolve()}/owm_exporter.yml", "r")
     except FileNotFoundError:
         print("Configuration file owm_exporter.yml not found! Please read the README.md.")
         exit_program(1)
@@ -120,7 +143,32 @@ owm_snow_3h {api_data['snow']['3h']}
         print(f"Error with API Request. HTTP code: {api_response.status_code}")
         exit_program(2)
 
-    exit_program(0)
+    return exporter_output
+
+def main():
+    # Load configuration for HTTP server
+    try:
+        webconfig_file = open(f"{pathlib.Path(__file__).parent.resolve()}/web_config.yml", "r")
+    except FileNotFoundError:
+        print("Configuration file web_config.yml not found! Please read the README.md.")
+        exit_program(3)
+    except PermissionError:
+        print("Configuration file web_config.yml permission denied!")
+        exit_program(3)
+        
+    # Parse configuration file
+    webconfig = yaml.safe_load(webconfig_file)
+    webconfig_file.close()
+
+    # Set default values for keys for HTTP server
+    if webconfig.get("bind_address") is None:
+        webconfig["bind_address"] = "0.0.0.0"
+    if webconfig.get("port") is None:
+        webconfig["port"] = 9200
+
+    # Start HTTP server to serve the metrics
+    server = HTTPServer((webconfig["bind_address"], webconfig["port"]), WebRequestHandler)
+    server.serve_forever()
 
 if __name__ == "__main__":
     main()
