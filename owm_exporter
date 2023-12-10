@@ -22,7 +22,7 @@ def main():
     config = yaml.safe_load(config_file)
 
     # URL for API call
-    api_url = f"http://api.openweathermap.org/data/2.5/weather?lat={config['lat']}&lon={config['lon']}&appid={config['api_key']}&units={config['measurement']}&lang={config['language']}"
+    api_url = f"http://api.openweathermap.org/data/2.5/weather?lat={config['lat']}&lon={config['lon']}&appid={config['api_key']}&units={config['units']}&lang={config['language']}"
 
     # Handle API response
     api_response = requests.get(api_url)
