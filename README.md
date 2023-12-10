@@ -44,12 +44,28 @@ You need the configuration file "owm_exporter.yml" at the location of the binary
 cp /opt/owm_exporter/samples/owm_exporter.yml.sample /opt/owm_exporter/owm_exporter.yml
 ```
 After creation you must set the parameters in this file!
+
+#### Change HTTP server configuration (optional)
+If you want to change the configuration for the HTTP server, then you have to create the file "web_config.yml" at the location of the binary "owm_exporter".
+```bash
+cp /opt/owm_exporter/samples/web_config.yml.sample /opt/owm_exporter/web_config.yml
+```
+After creation you must set the parameters in this file!
+
 #### Test program
 Now you can try to run the program by executing the binary:
 ```bash
 /opt/owm_exporter/owm_exporter
 ```
-If you dont see any error, all is fine and you can go one. Otherwise you should solve the errors. A small collection of solutions you can find under "Trouble shooting" or with Google. You leave the test by pressing "CTRL" + "C" and you will get back you promt.
+If you dont see any error, all is fine and you can go one. Otherwise you should solve the errors. A small collection of solutions you can find under "Trouble shooting" or with Google.
+
+Now test the exporter by open a connection:
+```bash
+curl -vvv http://localhost:9200/metrics
+```
+Or open a browser and go to http://ip_address:9200/metrics
+
+You leave the test connection by pressing "CTRL" + "C" and you will get back you prompt.
 
 #### Create Systemd service
 Because you dont want to let open a tty the hole time, you should create a service. Here is an example how to create a Systemd service:
