@@ -30,7 +30,7 @@ def main():
         api_data = api_response.json()
 
         # TEST
-        #print(api_data)
+        print(api_data)
 
         # Create output string for the exporter
         exporter_output = f"""HELP owm_lat Latitude of location.
@@ -45,6 +45,72 @@ owm_weather_main {api_data['weather'][0]['main']}
 HELP owm_weather_description Weather condition within the group.
 TYPE owm_weather_description gauge
 owm_weather_description {api_data['weather'][0]['description']}
+HELP owm_main_temp Temperature.
+TYPE owm_main_temp gauge
+owm_main_temp {api_data['main']['temp']}
+HELP owm_main_feels_like This temperature parameter accounts for the human perception of weather.
+TYPE owm_main_feels_like gauge
+owm_main_feels_like {api_data['main']['feels_like']}
+HELP owm_main_pressure Atmospheric pressure on the sea level, hPa.
+TYPE owm_main_pressure gauge
+owm_main_pressure {api_data['main']['pressure']}
+HELP owm_main_humidity Humidity, %.
+TYPE owm_main_humidity gauge
+owm_main_humidity {api_data['main']['humidity']}
+HELP owm_main_temp_min Minimum temperature at the moment. This is minimal currently observed temperature (within large megalopolises and urban areas).
+TYPE owm_main_temp_min gauge
+owm_main_temp_min {api_data['main']['temp_min']}
+HELP owm_main_temp_max Maximum temperature at the moment. This is maximal currently observed temperature (within large megalopolises and urban areas).
+TYPE owm_main_temp_max gauge
+owm_main_temp_max {api_data['main']['temp_max']}
+HELP owm_visibility Visibility, meter. The maximum value of the visibility is 10 km
+TYPE owm_visibility gauge
+owm_visibility {api_data['visibility']}
+HELP owm_wind_speed Wind speed.
+TYPE owm_wind_speed gauge
+owm_wind_speed {api_data['wind']['speed']}
+HELP owm_wind_deg Wind direction, degrees (meteorological).
+TYPE owm_wind_deg gauge
+owm_wind_deg {api_data['wind']['deg']}
+HELP owm_clouds_all Cloudiness, %.
+TYPE owm_clouds_all gauge
+owm_clouds_all {api_data['clouds']['all']}
+HELP owm_dt Time of data calculation, unix, UTC.
+TYPE owm_dt gauge
+owm_dt {api_data['dt']}
+HELP owm_sys_country Country code.
+TYPE owm_sys_country gauge
+owm_sys_country {api_data['sys']['country']}
+HELP owm_sys_sunrise Sunrise time, unix, UTC.
+TYPE owm_sys_sunrise gauge
+owm_sys_sunrise {api_data['sys']['sunrise']}
+HELP owm_sys_sunset Sunset time, unix, UTC.
+TYPE owm_sys_sunset gauge
+owm_sys_sunset {api_data['sys']['sunset']}
+"""
+        
+        # Add some more metrics, if they exists in API response
+        if "rain" in api_data:
+            if "1h" in api_data["rain"]:
+                exporter_output = exporter_output + f"""HELP owm_rain_1h Rain volume for the last 1 hour, mm.
+TYPE owm_rain_1h gauge
+owm_rain_1h {api_data['rain']['1h']}
+"""
+            if "3h" in api_data["rain"]:
+                exporter_output = exporter_output + f"""HELP owm_rain_3h Rain volume for the last 3 hours, mm.
+TYPE owm_rain_3h gauge
+owm_rain_3h {api_data['rain']['3h']}
+"""
+        if "snow" in api_data:
+            if "1h" in api_data["snow"]:
+                exporter_output = exporter_output + f"""HELP owm_snow_1h Snow volume for the last 1 hour, mm.
+TYPE owm_snow_1h gauge
+owm_snow_1h {api_data['snow']['1h']}
+"""
+            if "3h" in api_data["snow"]:
+                exporter_output = exporter_output + f"""HELP owm_snow_3h Snow volume for the last 3 hours, mm.
+TYPE owm_snow_3h gauge
+owm_snow_3h {api_data['snow']['3h']}
 """
 
         # TEST
