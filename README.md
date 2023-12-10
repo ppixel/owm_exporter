@@ -1,6 +1,4 @@
 # OpenWeatherMap Exporter for Prometheus
-!This documentation is not finish and tested!
-
 This is a Prometheus exporter for [OpenWeatherMap](https://openweathermap.org/).
 
 ## Requirements
@@ -11,6 +9,7 @@ You need an API key from [OpenWeatherMap](https://openweathermap.org/price).
 **Python 3.9.18** is recommended and tested. You need also following modules:
 - pyyaml
 - requests
+
 There is also a requirements file for Pip that you can use to install the required modules:
 ```bash
 pip3 install -r requirements.txt
@@ -34,10 +33,6 @@ You can download the files with git or with wget:
 git clone https://github.com/ppixel/owm_exporter.git /opt/owm_exporter/
 ```
 
-##### wget
-```bash
-wget -O /opt/owm_exporter/ TODO(url)
-```
 #### Create configuration file
 You need the configuration file "owm_exporter.yml" at the location of the binary "owm_exporter". Without it the program will not work!
 ```bash
@@ -109,7 +104,15 @@ Is planned.
 Is planned.
 
 ## Add Exporter to Prometheus
-TODO(add it)
+In your "prometheus.yml" configuration you have to add something like this:
+```yaml
+  - job_name: 'owm'
+    scrape_interval: 5m
+    static_configs:
+      - targets: ['ip_address:9200']
+```
+
+Be careful with the scrape_interval! Each time Prometheus scrape the metrics, the owm_exporter will make an API request, which will debit your API subscription.
 
 ## Code Snippets
 In the file "samples/vscode_snippets.md" you can find some code snippets that I used to write this program. I dont know why you need them to run this program. But I like to share them, so perhaps you can use them for your own projects.
