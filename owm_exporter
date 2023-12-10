@@ -20,6 +20,7 @@ def main():
         
     # Parse configuration file
     config = yaml.safe_load(config_file)
+    config_file.close()
 
     # URL for API call
     api_url = f"http://api.openweathermap.org/data/2.5/weather?lat={config['lat']}&lon={config['lon']}&appid={config['api_key']}&units={config['units']}&lang={config['language']}"
@@ -30,7 +31,7 @@ def main():
         api_data = api_response.json()
 
         # TEST
-        print(api_data)
+        #print(api_data)
 
         # Create output string for the exporter
         exporter_output = f"""HELP owm_lat Latitude of location.
@@ -114,7 +115,7 @@ owm_snow_3h {api_data['snow']['3h']}
 """
 
         # TEST
-        print(exporter_output)
+        #print(exporter_output)
     else:
         print(f"Error with API Request. HTTP code: {api_response.status_code}")
         exit_program(2)
