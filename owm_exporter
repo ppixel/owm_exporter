@@ -45,94 +45,102 @@ def get_metrics():
     config = yaml.safe_load(config_file)
     config_file.close()
 
-    # URL for API call
-    api_url = f"http://api.openweathermap.org/data/2.5/weather?lat={config['lat']}&lon={config['lon']}&appid={config['api_key']}&units={config['units']}&lang={config['language']}"
+    exporter_output = ""
+    data = {}
+    # Go through all locations
+    for location in config["locations"]:
+        # URL for API call
+        api_url = f"http://api.openweathermap.org/data/2.5/weather?lat={config['locations'][location]['lat']}&lon={config['locations'][location]['lon']}&appid={config['api_key']}&units={config['units']}&lang={config['language']}"
+    
+        # Make API call and handle API response
+        api_response = requests.get(api_url)
+        if api_response.status_code == 200:
+            api_data = api_response.json()
 
-    # Handle API response
-    api_response = requests.get(api_url)
-    if api_response.status_code == 200:
-        api_data = api_response.json()
+            data[location] = config["locations"][location]
+            data[location]["main_temp"] = api_data["main"]["temp"]
+            data[location]["main_feels_like"] = api_data["main"]["feels_like"]
+            data[location]["main_pressure"] = api_data["main"]["pressure"]
+            data[location]["main_humidity"] = api_data["main"]["humidity"]
+            data[location]["main_temp_min"] = api_data["main"]["temp_min"]
+            data[location]["main_temp_max"] = api_data["main"]["temp_max"]
+            data[location]["visibility"] = api_data["visibility"]
+            data[location]["wind_speed"] = api_data["wind"]["speed"]
+            data[location]["wind_deg"] = api_data["wind"]["deg"]
+            data[location]["clouds_all"] = api_data["clouds"]["all"]
+            data[location]["dt"] = api_data["dt"]
+            data[location]["sys_sunrise"] = api_data["sys"]["sunrise"]
+            data[location]["sys_sunset"] = api_data["sys"]["sunset"]
+            if "rain" in api_data:
+                if "1h" in api_data["rain"]:
+                    data[location]["rain_1h"] = api_data["rain"]["1h"]
+                if "3h" in api_data["rain"]:
+                    data[location]["rain_3h"] = api_data["rain"]["3h"]
+            if "snow" in api_data:
+                if "1h" in api_data["snow"]:
+                    data[location]["snow_1h"] = api_data["snow"]["1h"]
+                if "3h" in api_data["snow"]:
+                    data[location]["snow_3h"] = api_data["snow"]["3h"]
+        else:
+            print(f"Error with API Request. HTTP code: {api_response.status_code}")
+            exit_program(2)
 
-        # TEST
-        #print(api_data)
-
-        # Create output string for the exporter
-        exporter_output = f"""# HELP owm_lat Latitude of location.
-# TYPE owm_lat gauge
-owm_lat {api_data['coord']['lat']}
-# HELP owm_lon Longitude of location.
-# TYPE owm_lon gauge
-owm_lon {api_data['coord']['lon']}
-# HELP owm_main_temp Temperature.
-# TYPE owm_main_temp gauge
-owm_main_temp {api_data['main']['temp']}
-# HELP owm_main_feels_like This temperature parameter accounts for the human perception of weather.
-# TYPE owm_main_feels_like gauge
-owm_main_feels_like {api_data['main']['feels_like']}
-# HELP owm_main_pressure Atmospheric pressure on the sea level, hPa.
-# TYPE owm_main_pressure gauge
-owm_main_pressure {api_data['main']['pressure']}
-# HELP owm_main_humidity Humidity, %.
-# TYPE owm_main_humidity gauge
-owm_main_humidity {api_data['main']['humidity']}
-# HELP owm_main_temp_min Minimum temperature at the moment. This is minimal currently observed temperature (within large megalopolises and urban areas).
-# TYPE owm_main_temp_min gauge
-owm_main_temp_min {api_data['main']['temp_min']}
-# HELP owm_main_temp_max Maximum temperature at the moment. This is maximal currently observed temperature (within large megalopolises and urban areas).
-# TYPE owm_main_temp_max gauge
-owm_main_temp_max {api_data['main']['temp_max']}
-# HELP owm_visibility Visibility, meter. The maximum value of the visibility is 10 km
-# TYPE owm_visibility gauge
-owm_visibility {api_data['visibility']}
-# HELP owm_wind_speed Wind speed.
-# TYPE owm_wind_speed gauge
-owm_wind_speed {api_data['wind']['speed']}
-# HELP owm_wind_deg Wind direction, degrees (meteorological).
-# TYPE owm_wind_deg gauge
-owm_wind_deg {api_data['wind']['deg']}
-# HELP owm_clouds_all Cloudiness, %.
-# TYPE owm_clouds_all gauge
-owm_clouds_all {api_data['clouds']['all']}
-# HELP owm_dt Time of data calculation, unix, UTC.
-# TYPE owm_dt gauge
-owm_dt {api_data['dt']}
-# HELP owm_sys_sunrise Sunrise time, unix, UTC.
-# TYPE owm_sys_sunrise gauge
-owm_sys_sunrise {api_data['sys']['sunrise']}
-# HELP owm_sys_sunset Sunset time, unix, UTC.
-# TYPE owm_sys_sunset gauge
-owm_sys_sunset {api_data['sys']['sunset']}
-"""
-        
-        # Add some more metrics, if they exists in API response
-        if "rain" in api_data:
-            if "1h" in api_data["rain"]:
-                exporter_output = exporter_output + f"""# HELP owm_rain_1h Rain volume for the last 1 hour, mm.
-# TYPE owm_rain_1h gauge
-owm_rain_1h {api_data['rain']['1h']}
-"""
-            if "3h" in api_data["rain"]:
-                exporter_output = exporter_output + f"""# HELP owm_rain_3h Rain volume for the last 3 hours, mm.
-# TYPE owm_rain_3h gauge
-owm_rain_3h {api_data['rain']['3h']}
-"""
-        if "snow" in api_data:
-            if "1h" in api_data["snow"]:
-                exporter_output = exporter_output + f"""# HELP owm_snow_1h Snow volume for the last 1 hour, mm.
-# TYPE owm_snow_1h gauge
-owm_snow_1h {api_data['snow']['1h']}
-"""
-            if "3h" in api_data["snow"]:
-                exporter_output = exporter_output + f"""# HELP owm_snow_3h Snow volume for the last 3 hours, mm.
-# TYPE owm_snow_3h gauge
-owm_snow_3h {api_data['snow']['3h']}
-"""
-
-        # TEST
-        #print(exporter_output)
-    else:
-        print(f"Error with API Request. HTTP code: {api_response.status_code}")
-        exit_program(2)
+    # Build the output of the metrics
+    exporter_output = exporter_output + f"# HELP owm_main_temp Temperature.\n# TYPE owm_main_temp gauge\n"
+    for entry in data:
+        exporter_output = exporter_output + f"owm_main_temp{{location=\"{entry}\"}} {data[entry]['main_temp']}\n"
+    exporter_output = exporter_output + f"# HELP owm_main_feels_like This temperature parameter accounts for the human perception of weather.\n# TYPE owm_main_feels_like gauge\n"
+    for entry in data:
+        exporter_output = exporter_output + f"owm_main_feels_like{{location=\"{entry}\"}} {data[entry]['main_feels_like']}\n"
+    exporter_output = exporter_output + f"# HELP owm_main_pressure Atmospheric pressure on the sea level, hPa.\n# TYPE owm_main_pressure gauge\n"
+    for entry in data:
+        exporter_output = exporter_output + f"owm_main_pressure{{location=\"{entry}\"}} {data[entry]['main_pressure']}\n"
+    exporter_output = exporter_output + f"# HELP owm_main_humidity Humidity, %.\n# TYPE owm_main_humidity gauge\n"
+    for entry in data:
+        exporter_output = exporter_output + f"owm_main_humidity{{location=\"{entry}\"}} {data[entry]['main_humidity']}\n"
+    exporter_output = exporter_output + f"# HELP owm_main_temp_min Minimum temperature at the moment. This is minimal currently observed temperature (within large megalopolises and urban areas).\n# TYPE owm_main_temp_min gauge\n"
+    for entry in data:
+        exporter_output = exporter_output + f"owm_main_temp_min{{location=\"{entry}\"}} {data[entry]['main_temp_min']}\n"
+    exporter_output = exporter_output + f"# HELP owm_main_temp_max Maximum temperature at the moment. This is maximal currently observed temperature (within large megalopolises and urban areas).\n# TYPE owm_main_temp_max gauge\n"
+    for entry in data:
+        exporter_output = exporter_output + f"owm_main_temp_max{{location=\"{entry}\"}} {data[entry]['main_temp_max']}\n"
+    exporter_output = exporter_output + f"# HELP owm_visibility Visibility, meter. The maximum value of the visibility is 10 km.\n# TYPE owm_visibility gauge\n"
+    for entry in data:
+        exporter_output = exporter_output + f"owm_visibility{{location=\"{entry}\"}} {data[entry]['visibility']}\n"
+    exporter_output = exporter_output + f"# HELP owm_wind_speed Wind speed.\n# TYPE owm_wind_speed gauge\n"
+    for entry in data:
+        exporter_output = exporter_output + f"owm_wind_speed{{location=\"{entry}\"}} {data[entry]['wind_speed']}\n"
+    exporter_output = exporter_output + f"# HELP owm_wind_deg Wind direction, degrees (meteorological).\n# TYPE owm_wind_deg gauge\n"
+    for entry in data:
+        exporter_output = exporter_output + f"owm_wind_deg{{location=\"{entry}\"}} {data[entry]['wind_deg']}\n"
+    exporter_output = exporter_output + f"# HELP owm_clouds_all Cloudiness, %.\n# TYPE owm_clouds_all gauge\n"
+    for entry in data:
+        exporter_output = exporter_output + f"owm_clouds_all{{location=\"{entry}\"}} {data[entry]['clouds_all']}\n"
+    exporter_output = exporter_output + f"# HELP owm_dt Time of data calculation, unix, UTC.\n# TYPE owm_dt gauge\n"
+    for entry in data:
+        exporter_output = exporter_output + f"owm_dt{{location=\"{entry}\"}} {data[entry]['dt']}\n"
+    exporter_output = exporter_output + f"# HELP owm_sys_sunrise Sunrise time, unix, UTC.\n# TYPE owm_sys_sunrise gauge\n"
+    for entry in data:
+        exporter_output = exporter_output + f"owm_sys_sunrise{{location=\"{entry}\"}} {data[entry]['sys_sunrise']}\n"
+    exporter_output = exporter_output + f"# HELP owm_sys_sunset Sunset time, unix, UTC.\n# TYPE owm_sys_sunset gauge\n"
+    for entry in data:
+        exporter_output = exporter_output + f"owm_sys_sunset{{location=\"{entry}\"}} {data[entry]['sys_sunset']}\n"
+    exporter_output = exporter_output + f"# HELP owm_rain_1h Rain volume for the last 1 hour, mm.\n# TYPE owm_rain_1h gauge\n"
+    for entry in data:
+        if data[entry].get("rain_1h") is not None:
+            exporter_output = exporter_output + f"owm_rain_1h{{location=\"{entry}\"}} {data[entry]['rain_1h']}\n"
+    exporter_output = exporter_output + f"# HELP owm_rain_1h Rain volume for the last 3 hour, mm.\n# TYPE owm_rain_3h gauge\n"
+    for entry in data:
+        if data[entry].get("rain_3h") is not None:
+            exporter_output = exporter_output + f"owm_rain_3h{{location=\"{entry}\"}} {data[entry]['rain_3h']}\n"
+    exporter_output = exporter_output + f"# HELP owm_snow_1h Snow volume for the last 1 hour, mm.\n# TYPE owm_snow_1h gauge\n"
+    for entry in data:
+        if data[entry].get("snow_1h") is not None:
+            exporter_output = exporter_output + f"owm_snow_1h{{location=\"{entry}\"}} {data[entry]['snow_1h']}\n"
+    exporter_output = exporter_output + f"# HELP owm_snow_3h Snow volume for the last 3 hour, mm.\n# TYPE owm_snow_3h gauge\n"
+    for entry in data:
+        if data[entry].get("snow_3h") is not None:
+            exporter_output = exporter_output + f"owm_snow_3h{{location=\"{entry}\"}} {data[entry]['snow_3h']}\n"
 
     return exporter_output
 

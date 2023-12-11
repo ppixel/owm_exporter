@@ -1,13 +1,19 @@
 ---
 # Here is your api key of https://openweathermap.org
-api_key: "Your api key comes here in"
+api_key: "Your api key comes in here"
 
-# Latitude and Longitude of the location that you want to track
-# A good finder is here https://www.latlong.net/
-lat: 0.000000
-lon: 0.000000
 # In which units you want the values (https://openweathermap.org/current#data)
 units: "metric"
 # Language in which the text should be (https://openweathermap.org/current#multi)
 language: "en"
+
+# Latitude and Longitude of the location that you want to track
+# A good finder is here https://www.latlong.net/
+locations:
+  city_name_1:
+    lat: 0.000000
+    lon: 0.000000
+  city_name_2:
+    lat: 1.111111
+    lon: 1.111111
 ...

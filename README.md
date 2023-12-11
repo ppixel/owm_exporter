@@ -23,7 +23,6 @@ You should not run this program as root user or with your own user. Instead you 
 sudo useradd \
 --home-dir /opt/owm_exporter \
 --create-home \
---system \
 owm_exporter
 ```
 #### Download and place files
